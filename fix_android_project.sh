@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+set -x
 
 echo "🔍 Checking Flutter installation..."
 if ! command -v flutter &> /dev/null; then
@@ -12,7 +13,8 @@ fi
 TEMP_DIR=$(mktemp -d)
 ORIGINAL_DIR=$(pwd)
 PROJECT_NAME=$(basename "$ORIGINAL_DIR")
-PACKAGE_NAME="com.example.my_webview_app" # Should match your current package name
+PACKAGE_NAME="com.example.WaterWise" # Should match your current package name
+APP_NAME="WaterWise"
 
 echo "📁 Creating temporary Flutter project in $TEMP_DIR"
 cd "$TEMP_DIR"
