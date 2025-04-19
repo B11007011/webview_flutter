@@ -34,10 +34,9 @@ class WebViewScreen extends StatefulWidget {
 
 class _WebViewScreenState extends State<WebViewScreen> with WidgetsBindingObserver {
   WebViewController? _controller;
-  bool isLoading = true;
-  bool canGoBack = false;
-  bool canGoForward = false;
-  String? error;
+  bool _isLoading = true;
+  bool _hasError = false;
+  String _errorMessage = '';
 
   @override
   void initState() {
@@ -55,15 +54,14 @@ class _WebViewScreenState extends State<WebViewScreen> with WidgetsBindingObserv
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _controller?.reload();
+    if (state == AppLifecycleState.resumed && _controller != null) {
+      _controller!.reload();
     }
   }
 
   Future<void> _setupWebView() async {
     try {
       late final PlatformWebViewControllerCreationParams params;
-
       if (WebViewPlatform.instance is WebKitWebViewPlatform) {
         params = WebKitWebViewControllerCreationParams(
           allowsInlineMediaPlayback: true,
@@ -73,56 +71,40 @@ class _WebViewScreenState extends State<WebViewScreen> with WidgetsBindingObserv
         params = const PlatformWebViewControllerCreationParams();
       }
 
-      final controller = WebViewController.fromPlatformCreationParams(params);
+      final WebViewController controller = WebViewController.fromPlatformCreationParams(params);
 
       if (controller.platform is AndroidWebViewController) {
-        final androidController = controller.platform as AndroidWebViewController;
-        await androidController.setMediaPlaybackRequiresUserGesture(false);
+        AndroidWebViewController.enableDebugging(true);
+        (controller.platform as AndroidWebViewController)
+          ..setMediaPlaybackRequiresUserGesture(false)
+          ..setBackgroundColor(Colors.transparent);
       }
 
-      await controller
-        ..setJavaScriptMode(JavaScriptMode.unrestricted)
-        ..setBackgroundColor(Colors.transparent)
-        ..enableZoom(true)
-        ..setNavigationDelegate(
-          NavigationDelegate(
-            onProgress: (int progress) {
-              if (mounted) {
-                setState(() {
-                  isLoading = progress < 100;
-                });
-              }
-            },
-            onPageStarted: (String url) {
-              if (mounted) {
-                setState(() {
-                  isLoading = true;
-                  error = null;
-                });
-              }
-            },
-            onPageFinished: (String url) async {
-              if (mounted) {
-                setState(() {
-                  isLoading = false;
-                });
-                canGoBack = await controller.canGoBack();
-                canGoForward = await controller.canGoForward();
-                setState(() {});
-              }
-            },
-            onWebResourceError: (WebResourceError error) {
-              if (mounted) {
-                setState(() {
-                  this.error = error.description;
-                  isLoading = false;
-                });
-              }
-            },
-          ),
-        );
+      await controller.setJavaScriptMode(JavaScriptMode.unrestricted);
+      await controller.setBackgroundColor(Colors.transparent);
+      await controller.setNavigationDelegate(
+        NavigationDelegate(
+          onPageStarted: (String url) {
+            setState(() {
+              _isLoading = true;
+              _hasError = false;
+            });
+          },
+          onPageFinished: (String url) {
+            setState(() {
+              _isLoading = false;
+            });
+          },
+          onWebResourceError: (WebResourceError error) {
+            setState(() {
+              _isLoading = false;
+              _hasError = true;
+              _errorMessage = '${error.errorCode}: ${error.description}';
+            });
+          },
+        ),
+      );
 
-      // Load the URL
       await controller.loadRequest(
         Uri.parse('https://hackathon-app-mu.vercel.app/'),
       );
@@ -135,8 +117,8 @@ class _WebViewScreenState extends State<WebViewScreen> with WidgetsBindingObserv
     } catch (e) {
       if (mounted) {
         setState(() {
-          error = e.toString();
-          isLoading = false;
+          _hasError = true;
+          _errorMessage = e.toString();
         });
       }
     }
@@ -144,61 +126,72 @@ class _WebViewScreenState extends State<WebViewScreen> with WidgetsBindingObserv
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        if (_controller != null && await _controller!.canGoBack()) {
-          _controller!.goBack();
-          return false;
+    return PopScope(
+      onPopInvoked: (bool didPop) async {
+        if (didPop) return;
+        if (_controller == null) {
+          Navigator.of(context).pop();
+          return;
         }
-        return true;
+        
+        final canGoBack = await _controller!.canGoBack();
+        if (canGoBack) {
+          _controller!.goBack();
+        } else {
+          Navigator.of(context).pop();
+        }
       },
       child: Scaffold(
         body: SafeArea(
-          child: _controller == null
-              ? const Center(child: CircularProgressIndicator())
-              : Stack(
-                  children: [
-                    WebViewWidget(
-                      controller: _controller!,
-                    ),
-                    if (isLoading)
-                      Container(
-                        color: Colors.white70,
-                        child: const Center(
-                          child: CircularProgressIndicator(),
-                        ),
-                      ),
-                    if (error != null)
-                      Container(
-                        color: Colors.white,
-                        padding: const EdgeInsets.all(16),
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.error_outline,
-                                color: Colors.red,
-                                size: 48,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                error!,
-                                style: const TextStyle(color: Colors.red),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 16),
-                              ElevatedButton.icon(
-                                onPressed: _setupWebView,
-                                icon: const Icon(Icons.refresh),
-                                label: const Text('Try Again'),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                  ],
+          child: Stack(
+            children: [
+              if (_controller != null)
+                WebViewWidget(
+                  controller: _controller!,
                 ),
+              if (_isLoading)
+                Container(
+                  color: Colors.white70,
+                  child: const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+              if (_hasError)
+                Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.all(16),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          color: Colors.red,
+                          size: 48,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _errorMessage,
+                          style: const TextStyle(color: Colors.red),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              _hasError = false;
+                              _isLoading = true;
+                            });
+                            _setupWebView();
+                          },
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
