@@ -14,7 +14,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -29,13 +32,23 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Check directory structure
+        run: |
+          pwd
+          ls -la
+          ls -la android/app/src/main/
+          echo "Manifest location:"
+          find . -name "AndroidManifest.xml"
+
       - name: Install dependencies
         run: |
           flutter config --no-analytics
           flutter pub get
 
       - name: Build APK
-        run: flutter build apk --release
+        run: |
+          flutter clean
+          flutter build apk --release
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
