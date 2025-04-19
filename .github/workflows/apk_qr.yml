@@ -1,0 +1,61 @@
+name: Build APK, Upload, and Generate QR
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Needed for release creation
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/app/outputs/flutter-apk/app-release.apk
+          tag_name: v1.0.${{ github.run_number }}
+          name: Release v1.0.${{ github.run_number }}
+          body: |
+            Automated APK build
+            Build number: ${{ github.run_number }}
+            Commit: ${{ github.sha }}
+          draft: false
+          prerelease: false
+
+      - name: Generate QR Code
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qrencode
+          QR_URL="https://github.com/${{ github.repository }}/releases/download/v1.0.${{ github.run_number }}/app-release.apk"
+          qrencode -o qr_apk.png "$QR_URL"
+          echo "Download APK: $QR_URL" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload QR Code
+        uses: actions/upload-artifact@v3
+        with:
+          name: qr-code-v1.0.${{ github.run_number }}
+          path: qr_apk.png
+          retention-days: 90 
