@@ -1,10 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  // Set preferred orientations and system UI overlay style
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+  SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.edgeToEdge,
+    overlays: [SystemUiOverlay.top],
+  );
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarDividerColor: Colors.transparent,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ),
+  );
   runApp(const MyApp());
 }
 
@@ -83,10 +102,17 @@ class _WebViewScreenState extends State<WebViewScreen> with WidgetsBindingObserv
       await controller.setBackgroundColor(Colors.transparent);
       
       // Set custom user agent to improve compatibility
-      await controller.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1');
+      await controller.setUserAgent('Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Mobile Safari/537.36');
       
       await controller.setNavigationDelegate(
         NavigationDelegate(
+          onUrlChange: (UrlChange change) {
+            print('URL changed to: ${change.url}');
+          },
+          onNavigationRequest: (NavigationRequest request) {
+            print('Navigation request to: ${request.url}');
+            return NavigationDecision.navigate;
+          },
           onPageStarted: (String url) {
             setState(() {
               _isLoading = true;
@@ -99,6 +125,7 @@ class _WebViewScreenState extends State<WebViewScreen> with WidgetsBindingObserv
             });
           },
           onWebResourceError: (WebResourceError error) {
+            print('WebView error: ${error.errorCode} - ${error.description}');
             setState(() {
               _isLoading = false;
               _hasError = true;
@@ -109,7 +136,7 @@ class _WebViewScreenState extends State<WebViewScreen> with WidgetsBindingObserv
       );
 
       await controller.loadRequest(
-        Uri.parse('https://kzmj3jb407psetiytlyq.lite.vusercontent.net/'),
+        Uri.parse('https://hackathon-app-mu.vercel.app/'),
       );
 
       if (mounted) {
@@ -129,81 +156,89 @@ class _WebViewScreenState extends State<WebViewScreen> with WidgetsBindingObserv
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      onPopInvoked: (bool didPop) async {
-        if (didPop) return;
-        if (_controller == null) {
-          Navigator.of(context).pop();
-          return;
-        }
-        
-        try {
-          final canGoBack = await _controller!.canGoBack();
-          if (canGoBack) {
-            await _controller!.goBack();
-          } else {
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark.copyWith(
+        statusBarColor: Colors.transparent,
+        systemNavigationBarColor: Colors.transparent,
+      ),
+      child: PopScope(
+        onPopInvoked: (bool didPop) async {
+          if (didPop) return;
+          if (_controller == null) {
+            Navigator.of(context).pop();
+            return;
+          }
+          
+          try {
+            final canGoBack = await _controller!.canGoBack();
+            if (canGoBack) {
+              await _controller!.goBack();
+            } else {
+              if (context.mounted) {
+                Navigator.of(context).pop();
+              }
+            }
+          } catch (e) {
             if (context.mounted) {
               Navigator.of(context).pop();
             }
           }
-        } catch (e) {
-          if (context.mounted) {
-            Navigator.of(context).pop();
-          }
-        }
-      },
-      child: Scaffold(
-        body: Stack(
-          children: [
-            if (_controller != null)
-              WebViewWidget(
-                controller: _controller!,
-              ),
-            if (_isLoading)
-              Container(
-                color: Colors.white.withOpacity(0.7),
-                child: const Center(
-                  child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-                    strokeWidth: 3,
+        },
+        child: Scaffold(
+          extendBodyBehindAppBar: true,
+          extendBody: true,
+          body: Stack(
+            children: [
+              if (_controller != null)
+                WebViewWidget(
+                  controller: _controller!,
+                ),
+              if (_isLoading)
+                Container(
+                  color: Colors.white.withOpacity(0.7),
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                      strokeWidth: 3,
+                    ),
                   ),
                 ),
-              ),
-            if (_hasError)
-              Container(
-                color: Colors.white,
-                padding: const EdgeInsets.all(16),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.error_outline,
-                        color: Colors.red,
-                        size: 48,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _errorMessage,
-                        style: const TextStyle(color: Colors.red),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            _hasError = false;
-                            _isLoading = true;
-                          });
-                          _setupWebView();
-                        },
-                        child: const Text('Retry'),
-                      ),
-                    ],
+              if (_hasError)
+                Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.all(16),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          color: Colors.red,
+                          size: 48,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _errorMessage,
+                          style: const TextStyle(color: Colors.red),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              _hasError = false;
+                              _isLoading = true;
+                            });
+                            _setupWebView();
+                          },
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

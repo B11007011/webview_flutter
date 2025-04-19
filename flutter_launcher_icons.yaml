@@ -1,0 +1,16 @@
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/new_icon.png"
+  # Optional: you can specify adaptive_icon_background and adaptive_icon_foreground for Android
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/new_icon_foreground.png"
+  # Optional: you can specify icon size for iOS
+  ios_content_mode: scaleAspectFit
+  remove_alpha_ios: true  # makes the iOS icon background solid
+  web:
+    generate: false  # Set to true if you want web icons
+  windows:
+    generate: false  # Set to true if you want Windows icons
+  macos:
+    generate: false  # Set to true if you want macOS icons 
