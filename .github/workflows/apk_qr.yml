@@ -76,6 +76,7 @@ jobs:
           ./gradlew clean
           cd ..
           flutter build apk --release --verbose
+          cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/WaterWise.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

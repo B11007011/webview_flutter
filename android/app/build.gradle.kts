@@ -35,8 +35,28 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            
+            // Add ProGuard rules
+            proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
         }
     }
+    
+    // Configure APK output file name
+    applicationVariants.all {
+        val variant = this
+        variant.outputs
+            .map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
+            .forEach { output ->
+                if (variant.buildType.name == "release") {
+                    output.outputFileName = "WaterWise.apk"
+                }
+            }
+    }
+}
+
+dependencies {
+    // Add Play Core library for split compatibility
+    implementation("com.google.android.play:core:1.10.3")
 }
 
 flutter {

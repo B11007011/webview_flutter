@@ -17,6 +17,9 @@
 # Keep your application class
 -keep class com.example.WaterWise.MainActivity { *; }
 
+# Play Core Library
+-keep class com.google.android.play.core.** { *; }
+
 # Uncomment this to preserve the line number information for
 # debugging stack traces.
 -keepattributes SourceFile,LineNumberTable 
