@@ -5,16 +5,19 @@ on:
     branches: [ main ]
   workflow_dispatch:  # Allow manual trigger
 
+permissions:
+  contents: write
+  actions: write
+  checks: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write  # Needed for release creation
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
@@ -22,7 +25,8 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          flutter-version: '3.19.0'
+          channel: 'stable'
           cache: true
 
       - name: Install dependencies
@@ -31,9 +35,17 @@ jobs:
       - name: Build APK
         run: flutter build apk --release
 
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: build/app/outputs/flutter-apk/app-release.apk
           tag_name: v1.0.${{ github.run_number }}
@@ -54,7 +66,7 @@ jobs:
           echo "Download APK: $QR_URL" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload QR Code
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: qr-code-v1.0.${{ github.run_number }}
           path: qr_apk.png
