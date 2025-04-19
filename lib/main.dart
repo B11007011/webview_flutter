@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
-import 'dart:io' show Platform;
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -82,6 +81,10 @@ class _WebViewScreenState extends State<WebViewScreen> with WidgetsBindingObserv
 
       await controller.setJavaScriptMode(JavaScriptMode.unrestricted);
       await controller.setBackgroundColor(Colors.transparent);
+      
+      // Set custom user agent to improve compatibility
+      await controller.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1');
+      
       await controller.setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (String url) {
@@ -106,7 +109,7 @@ class _WebViewScreenState extends State<WebViewScreen> with WidgetsBindingObserv
       );
 
       await controller.loadRequest(
-        Uri.parse('https://hackathon-app-mu.vercel.app/'),
+        Uri.parse('https://kzmj3jb407psetiytlyq.lite.vusercontent.net/'),
       );
 
       if (mounted) {
@@ -134,64 +137,73 @@ class _WebViewScreenState extends State<WebViewScreen> with WidgetsBindingObserv
           return;
         }
         
-        final canGoBack = await _controller!.canGoBack();
-        if (canGoBack) {
-          _controller!.goBack();
-        } else {
-          Navigator.of(context).pop();
+        try {
+          final canGoBack = await _controller!.canGoBack();
+          if (canGoBack) {
+            await _controller!.goBack();
+          } else {
+            if (context.mounted) {
+              Navigator.of(context).pop();
+            }
+          }
+        } catch (e) {
+          if (context.mounted) {
+            Navigator.of(context).pop();
+          }
         }
       },
       child: Scaffold(
-        body: SafeArea(
-          child: Stack(
-            children: [
-              if (_controller != null)
-                WebViewWidget(
-                  controller: _controller!,
-                ),
-              if (_isLoading)
-                Container(
-                  color: Colors.white70,
-                  child: const Center(
-                    child: CircularProgressIndicator(),
+        body: Stack(
+          children: [
+            if (_controller != null)
+              WebViewWidget(
+                controller: _controller!,
+              ),
+            if (_isLoading)
+              Container(
+                color: Colors.white.withOpacity(0.7),
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                    strokeWidth: 3,
                   ),
                 ),
-              if (_hasError)
-                Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.all(16),
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.error_outline,
-                          color: Colors.red,
-                          size: 48,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          _errorMessage,
-                          style: const TextStyle(color: Colors.red),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () {
-                            setState(() {
-                              _hasError = false;
-                              _isLoading = true;
-                            });
-                            _setupWebView();
-                          },
-                          child: const Text('Retry'),
-                        ),
-                      ],
-                    ),
+              ),
+            if (_hasError)
+              Container(
+                color: Colors.white,
+                padding: const EdgeInsets.all(16),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        color: Colors.red,
+                        size: 48,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        _errorMessage,
+                        style: const TextStyle(color: Colors.red),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _hasError = false;
+                            _isLoading = true;
+                          });
+                          _setupWebView();
+                        },
+                        child: const Text('Retry'),
+                      ),
+                    ],
                   ),
                 ),
-            ],
-          ),
+              ),
+          ],
         ),
       ),
     );
