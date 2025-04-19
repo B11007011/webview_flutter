@@ -13,10 +13,10 @@ This guide helps with setting up and troubleshooting the CI/CD pipeline for buil
 
 Before pushing to GitHub, ensure your local environment is properly configured:
 
-1. Run the `fix_gradle_wrapper.sh` script to ensure Gradle wrapper files are in place:
+1. Fix your Android project structure using the provided script:
    ```bash
-   chmod +x fix_gradle_wrapper.sh
-   ./fix_gradle_wrapper.sh
+   chmod +x fix_android_project.sh
+   ./fix_android_project.sh
    ```
 
 2. Verify your `local.properties` file contains correct paths:
@@ -30,17 +30,23 @@ Before pushing to GitHub, ensure your local environment is properly configured:
    cd android
    ./gradlew clean
    cd ..
-   flutter build apk --release
+   flutter build apk --debug
    ```
 
 ## Common Issues and Solutions
 
+### "Your app is using an unsupported Gradle project"
+
+**Solution:**
+- Run the `fix_android_project.sh` script to rebuild the Android project structure
+- This script creates a temporary Flutter project, extracts the proper Gradle structure, and preserves your custom settings
+
 ### "No such file or directory: android/gradlew"
 
 **Solution:**
-- Ensure the Gradle wrapper files are properly set up in your repo
-- Run the `fix_gradle_wrapper.sh` script to fix this issue
-- Make sure your `android/gradle/wrapper` directory contains `gradle-wrapper.jar` and `gradle-wrapper.properties`
+- This is likely due to an unsupported Gradle project structure
+- Run the `fix_android_project.sh` script to fix this issue
+- This will ensure the Gradle wrapper files are properly set up
 
 ### "SDK location not found"
 
@@ -55,6 +61,21 @@ Before pushing to GitHub, ensure your local environment is properly configured:
 - Make sure your NDK version is set correctly in `android/app/build.gradle.kts`
 - If needed, update Gradle wrapper version in `android/gradle/wrapper/gradle-wrapper.properties`
 
+## What the Fix Script Does
+
+The `fix_android_project.sh` script:
+
+1. Creates a temporary Flutter project with proper structure
+2. Backs up your custom Android settings and files
+3. Replaces your Android project with the properly structured one
+4. Restores your custom settings:
+   - Kotlin files
+   - AndroidManifest.xml permissions and settings
+   - NDK version
+   - minSdkVersion
+   - ProGuard rules
+5. Cleans up temporary files
+
 ## GitHub Actions Workflow
 
 The workflow performs these key steps:
@@ -62,7 +83,7 @@ The workflow performs these key steps:
 2. Sets up Gradle
 3. Sets up Flutter
 4. Creates `local.properties` file
-5. Ensures Gradle wrapper is executable
+5. Fixes Android project structure using our script
 6. Builds the APK
 7. Creates a GitHub release with the APK
 8. Generates a QR code for easy download

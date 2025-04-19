@@ -40,17 +40,17 @@ jobs:
           echo "flutter.sdk=$FLUTTER_HOME" > android/local.properties
           echo "sdk.dir=$ANDROID_SDK_ROOT" >> android/local.properties
 
-      - name: Ensure Gradle wrapper exists
+      - name: Fix Android project structure
         run: |
-          cd android
-          if [ ! -f "./gradlew" ]; then
-            echo "Gradle wrapper not found, creating it..."
-            flutter pub get
-            flutter build apk --debug --no-pub # This will generate the gradle wrapper files
-          fi
-          chmod +x ./gradlew
+          # Make script executable
+          chmod +x ./fix_android_project.sh
+          # Run the fix script
+          ./fix_android_project.sh
+          # Create local.properties again (since we replaced the android directory)
+          echo "flutter.sdk=$FLUTTER_HOME" > android/local.properties
+          echo "sdk.dir=$ANDROID_SDK_ROOT" >> android/local.properties
 
-      - name: Check and fix directory structure
+      - name: Check directory structure
         run: |
           pwd
           echo "Current directory structure:"
@@ -61,8 +61,6 @@ jobs:
           ls -la android/app/
           echo "Src/main directory structure:"
           ls -la android/app/src/main/
-          echo "Manifest locations:"
-          find . -name "AndroidManifest.xml"
           echo "Gradle wrapper files:"
           find android -name "gradlew*"
           find android -name "gradle-wrapper*"

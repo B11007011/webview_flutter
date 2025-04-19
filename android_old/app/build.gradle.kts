@@ -6,9 +6,9 @@ plugins {
 }
 
 android {
-    namespace = "com.example.my_webview_app.webview_flutter"
+    namespace = "com.example.my_webview_app"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "27.0.12077973"  // Updated NDK version for webview_flutter_android compatibility
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -24,7 +24,7 @@ android {
         applicationId = "com.example.my_webview_app.webview_flutter"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 21 // Updated for webview_flutter_android compatibility
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
