@@ -76,14 +76,15 @@ jobs:
           ./gradlew clean
           cd ..
           flutter build apk --release --verbose
-          APK_NAME=$(ls build/app/outputs/flutter-apk/ | grep .apk)
-          echo "APK_NAME=$APK_NAME" >> $GITHUB_ENV
+          APK_NAME=$(ls build/app/outputs/flutter-apk/ | grep -E '\.apk$' | grep -v '\.sha1$')
+          echo "APK_NAME=${APK_NAME}" >> $GITHUB_ENV
+          echo "APK_PATH=build/app/outputs/flutter-apk/${APK_NAME}" >> $GITHUB_ENV
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
-          path: build/app/outputs/flutter-apk/${{ env.APK_NAME }}
+          path: ${{ env.APK_PATH }}
 
       - name: Create Release
         id: create_release
@@ -91,7 +92,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: build/app/outputs/flutter-apk/${{ env.APK_NAME }}
+          files: ${{ env.APK_PATH }}
           tag_name: v1.0.${{ github.run_number }}
           name: Release v1.0.${{ github.run_number }}
           body: |
