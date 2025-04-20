@@ -12,9 +12,9 @@ fi
 # Create a temporary directory
 TEMP_DIR=$(mktemp -d)
 ORIGINAL_DIR=$(pwd)
-PROJECT_NAME="WaterWise"  # Make sure this is consistent
-PACKAGE_NAME="com.example.WaterWise" # Should match your current package name
-APP_NAME="WaterWise"
+PROJECT_NAME="waterwise"  # Flutter package name must be lowercase with underscores
+PACKAGE_NAME="com.example.waterwise" # Should match your current package name
+APP_NAME="WaterWise"  # Display name can have capital letters
 
 echo "📁 Creating temporary Flutter project in $TEMP_DIR"
 cd "$TEMP_DIR"

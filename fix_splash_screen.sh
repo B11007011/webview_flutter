@@ -27,11 +27,20 @@ else
   echo "❌ AndroidManifest.xml not found"
 fi
 
-# Update the application name in the code
+# Update the application name in the code - but be careful with packages
 if grep -q "webview_flutter" lib/main.dart; then
-  sed -i.bak 's/webview_flutter/WaterWise/g' lib/main.dart
+  # Replace "webview_flutter" with "waterwise" only for app names, not package imports
+  sed -i.bak '/import/! s/webview_flutter/waterwise/g' lib/main.dart
   rm lib/main.dart.bak
-  echo "✅ Updated main.dart references from 'webview_flutter' to 'WaterWise'"
+  echo "✅ Updated main.dart references from 'webview_flutter' to 'waterwise'"
+fi
+
+# Handle the package name in pubspec.yaml
+if [ -f "pubspec.yaml" ]; then
+  cp pubspec.yaml pubspec.yaml.bak
+  sed -i.bak 's/name: webview_flutter/name: waterwise/g' pubspec.yaml
+  rm pubspec.yaml.bak
+  echo "✅ Updated package name in pubspec.yaml"
 fi
 
 # Create or update launch_background.xml

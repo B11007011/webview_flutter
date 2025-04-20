@@ -86,11 +86,17 @@ jobs:
           APK_NAME=$(ls build/app/outputs/flutter-apk/ | grep -E '\.apk$' | grep -v '\.sha1$')
           echo "APK_NAME=${APK_NAME}" >> $GITHUB_ENV
           echo "APK_PATH=build/app/outputs/flutter-apk/${APK_NAME}" >> $GITHUB_ENV
+          # Rename APK to include WaterWise name
+          if [ -f "build/app/outputs/flutter-apk/${APK_NAME}" ]; then
+            mv "build/app/outputs/flutter-apk/${APK_NAME}" "build/app/outputs/flutter-apk/WaterWise.apk"
+            echo "APK_NAME=WaterWise.apk" >> $GITHUB_ENV
+            echo "APK_PATH=build/app/outputs/flutter-apk/WaterWise.apk" >> $GITHUB_ENV
+          fi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: release-apk
+          name: WaterWise-release-apk
           path: ${{ env.APK_PATH }}
 
       - name: Create Release
@@ -101,7 +107,7 @@ jobs:
         with:
           files: ${{ env.APK_PATH }}
           tag_name: v1.0.${{ github.run_number }}
-          name: Release v1.0.${{ github.run_number }}
+          name: WaterWise v1.0.${{ github.run_number }}
           body: |
             Automated APK build
             Build number: ${{ github.run_number }}
@@ -115,16 +121,23 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y qrencode
           # Set a clear app name in the URL to avoid confusion
-          APP_NAME="WaterWise"  # This matches your app name in the AndroidManifest.xml
+          APP_NAME="WaterWise"  # Display name of the app
+          REPO_NAME="${GITHUB_REPOSITORY#*/}"  # Extract repository name without owner
+          echo "Repository name: $REPO_NAME" >> $GITHUB_STEP_SUMMARY
           QR_URL="https://github.com/${{ github.repository }}/releases/download/v1.0.${{ github.run_number }}/${{ env.APK_NAME }}"
           echo "Generated download URL: $QR_URL" >> $GITHUB_STEP_SUMMARY
-          qrencode -o qr_apk.png "$QR_URL"
+          # Add a text label to the QR image
+          qrencode -o qr_temp.png "$QR_URL"
+          # Install ImageMagick to add text to image
+          sudo apt-get install -y imagemagick
+          convert qr_temp.png -gravity south -pointsize 20 -annotate +0+10 "WaterWise App" qr_apk.png
+          rm qr_temp.png
           echo "Download APK: $QR_URL" >> $GITHUB_STEP_SUMMARY
           echo "App Name: $APP_NAME" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload QR Code
         uses: actions/upload-artifact@v4
         with:
-          name: qr-code-v1.0.${{ github.run_number }}
+          name: WaterWise-QR-v1.0.${{ github.run_number }}
           path: qr_apk.png
           retention-days: 90 
