@@ -51,9 +51,10 @@ echo '<?xml version="1.0" encoding="utf-8"?>
     <!-- You can add a logo here if desired -->
 </layer-list>' > android/app/src/main/res/drawable/launch_background.xml
 
-# Create or update styles.xml to ensure proper theming
+# Create styles.xml with proper styling (split this to avoid syntax errors)
 mkdir -p android/app/src/main/res/values
-echo '<?xml version="1.0" encoding="utf-8"?>
+cat > android/app/src/main/res/values/styles.xml << 'EOL'
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Theme applied to the Android Window while the process is starting when the OS's Dark Mode setting is off -->
     <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
@@ -68,7 +69,8 @@ echo '<?xml version="1.0" encoding="utf-8"?>
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
-</resources>' > android/app/src/main/res/values/styles.xml
+</resources>
+EOL
 
 # Run flutter clean to ensure rebuild with new resources
 echo "🧹 Running flutter clean to refresh resources..."
