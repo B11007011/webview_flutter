@@ -76,13 +76,20 @@ jobs:
           ./gradlew clean
           cd ..
           flutter build apk --release --verbose
-          cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/app-release.apk
+          # Check if the custom named APK exists, if not copy from flutter output
+          if [ -f "build/app/outputs/apk/release/WaterWise.apk" ]; then
+            echo "Custom named APK found at build/app/outputs/apk/release/WaterWise.apk"
+          else
+            echo "Copying app-release.apk to WaterWise.apk"
+            mkdir -p build/app/outputs/apk/release/
+            cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/apk/release/WaterWise.apk
+          fi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: build/app/outputs/apk/release/WaterWise.apk
 
       - name: Create Release
         id: create_release
@@ -90,7 +97,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: build/app/outputs/flutter-apk/WaterWise.apk
+          files: build/app/outputs/apk/release/WaterWise.apk
           tag_name: v1.0.${{ github.run_number }}
           name: Release v1.0.${{ github.run_number }}
           body: |
