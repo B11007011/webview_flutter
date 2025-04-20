@@ -106,9 +106,13 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y qrencode
+          # Set a clear app name in the URL to avoid confusion
+          APP_NAME="WaterWise"  # This matches your app name in the AndroidManifest.xml
           QR_URL="https://github.com/${{ github.repository }}/releases/download/v1.0.${{ github.run_number }}/${{ env.APK_NAME }}"
+          echo "Generated download URL: $QR_URL" >> $GITHUB_STEP_SUMMARY
           qrencode -o qr_apk.png "$QR_URL"
           echo "Download APK: $QR_URL" >> $GITHUB_STEP_SUMMARY
+          echo "App Name: $APP_NAME" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload QR Code
         uses: actions/upload-artifact@v4
