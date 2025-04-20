@@ -12,7 +12,7 @@ fi
 # Create a temporary directory
 TEMP_DIR=$(mktemp -d)
 ORIGINAL_DIR=$(pwd)
-PROJECT_NAME=$(basename "$ORIGINAL_DIR")
+PROJECT_NAME="WaterWise"  # Make sure this is consistent
 PACKAGE_NAME="com.example.WaterWise" # Should match your current package name
 APP_NAME="WaterWise"
 
@@ -83,6 +83,11 @@ if [ -f "$TEMP_DIR/backup/android/app/src/main/AndroidManifest.xml" ]; then
         # Add the attribute to the application tag
         line="${line/\<application/\<application android:usesCleartextTraffic=\"true\"}"
       fi
+      
+      # Make sure the label is WaterWise
+      if [[ "$line" == *"android:label="* ]]; then
+        line=$(echo "$line" | sed 's/android:label="[^"]*"/android:label="WaterWise"/g')
+      fi
     fi
     echo "$line" >> "$NEW_MANIFEST"
   done < "android/app/src/main/AndroidManifest.xml"
@@ -102,6 +107,10 @@ if [ -f "android/app/build.gradle.kts" ]; then
       echo "    ndkVersion = \"27.0.12077973\"  // Updated NDK version for webview_flutter_android compatibility" >> "$NEW_GRADLE"
     elif [[ "$line" == *"minSdk = flutter.minSdkVersion"* ]]; then
       echo "        minSdk = 21 // Updated for webview_flutter_android compatibility" >> "$NEW_GRADLE"
+    elif [[ "$line" == *"namespace ="* ]]; then
+      echo "    namespace = \"$PACKAGE_NAME\"" >> "$NEW_GRADLE"
+    elif [[ "$line" == *"applicationId ="* ]]; then
+      echo "        applicationId = \"$PACKAGE_NAME\"" >> "$NEW_GRADLE"
     else
       echo "$line" >> "$NEW_GRADLE"
     fi
@@ -119,6 +128,10 @@ elif [ -f "android/app/build.gradle" ]; then
       echo "    ndkVersion \"27.0.12077973\"  // Updated NDK version for webview_flutter_android compatibility" >> "$NEW_GRADLE"
     elif [[ "$line" == *"minSdkVersion flutter.minSdkVersion"* ]]; then
       echo "        minSdkVersion 21 // Updated for webview_flutter_android compatibility" >> "$NEW_GRADLE"
+    elif [[ "$line" == *"namespace "* ]]; then
+      echo "    namespace \"$PACKAGE_NAME\"" >> "$NEW_GRADLE"
+    elif [[ "$line" == *"applicationId "* ]]; then
+      echo "        applicationId \"$PACKAGE_NAME\"" >> "$NEW_GRADLE"
     else
       echo "$line" >> "$NEW_GRADLE"
     fi
@@ -132,6 +145,13 @@ fi
 if [ -f "$TEMP_DIR/backup/android/app/proguard-rules.pro" ]; then
   cp "$TEMP_DIR/backup/android/app/proguard-rules.pro" android/app/
 fi
+
+# Create or modify strings.xml to ensure app name is correctly set
+mkdir -p android/app/src/main/res/values
+echo '<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WaterWise</string>
+</resources>' > android/app/src/main/res/values/strings.xml
 
 echo "🧹 Cleaning up..."
 rm -rf "$TEMP_DIR"

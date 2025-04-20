@@ -50,6 +50,13 @@ jobs:
           echo "flutter.sdk=$FLUTTER_HOME" > android/local.properties
           echo "sdk.dir=$ANDROID_SDK_ROOT" >> android/local.properties
 
+      - name: Fix splash screen
+        run: |
+          # Make script executable
+          chmod +x ./fix_splash_screen.sh
+          # Run the fix script
+          ./fix_splash_screen.sh
+
       - name: Check directory structure
         run: |
           pwd
@@ -99,6 +106,7 @@ jobs:
             Automated APK build
             Build number: ${{ github.run_number }}
             Commit: ${{ github.sha }}
+            App: WaterWise
           draft: false
           prerelease: false
 
