@@ -7,6 +7,17 @@ echo "🔍 Fixing Android Gradle project structure..."
 # Create a temporary directory for operations
 TEMP_DIR=$(mktemp -d)
 
+# First, extract the SDK version constraint from your pubspec.yaml
+echo "📊 Detecting SDK version requirements..."
+SDK_VERSION=$(grep -E "sdk: '>=([0-9.]+) <" pubspec.yaml | sed "s/.*>=\([0-9.]*\).*/\1/")
+if [ -z "$SDK_VERSION" ]; then
+  # Default if we can't extract it
+  SDK_VERSION="3.3.0"
+  echo "⚠️ Could not extract SDK version from pubspec.yaml, using default: $SDK_VERSION"
+else
+  echo "✅ Found SDK version requirement: $SDK_VERSION"
+fi
+
 # Backup important files from current Android structure
 echo "📋 Backing up important files..."
 mkdir -p android_backup
@@ -37,6 +48,41 @@ if grep -q "signingConfig" android/app/build.gradle.kts 2>/dev/null; then
   mkdir -p android_backup/app
   grep -A 20 "signingConfig" android/app/build.gradle.kts > android_backup/app/signing_config.txt 2>/dev/null || true
 fi
+
+echo "🔄 Creating a compatible temporary Flutter project..."
+mkdir -p temp_project
+cd temp_project
+
+# Create a temporary pubspec.yaml with minimal requirements
+cat > temp_pubspec.yaml << EOF
+name: temp_waterwise
+description: "Temporary project for Android structure"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true
+EOF
+
+# Create the temporary project manually to avoid SDK version issues
+mkdir -p temp_app
+cp temp_pubspec.yaml temp_app/pubspec.yaml
+cd temp_app
+flutter create --platforms=android .
+cd ../..
 
 echo "🔄 Replacing Android directory with correct structure..."
 # Rename the old android directory
@@ -73,10 +119,10 @@ fi
 
 # Update application ID in build.gradle (if it exists)
 if [ -f "android/app/build.gradle" ]; then
-  sed -i.bak 's/applicationId "com.example.waterwise"/applicationId "com.example.WaterWise"/g' android/app/build.gradle
+  sed -i.bak 's/applicationId "com.example.temp_waterwise"/applicationId "com.example.WaterWise"/g' android/app/build.gradle
   sed -i.bak 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle
   sed -i.bak 's/ndkVersion flutter.ndkVersion/ndkVersion "27.0.12077973"/g' android/app/build.gradle
-  sed -i.bak 's/namespace "com.example.waterwise.waterwise"/namespace "com.example.WaterWise"/g' android/app/build.gradle
+  sed -i.bak 's/namespace "com.example.temp_waterwise"/namespace "com.example.WaterWise"/g' android/app/build.gradle
   rm android/app/build.gradle.bak 2>/dev/null || true
 fi
 

@@ -1,21 +1,8 @@
             signingConfig = signingConfigs.getByName("debug")
-            
-            // Add ProGuard rules
-            proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
         }
-    }
-    
-    // Configure APK output file name
-    applicationVariants.all {
-        val variant = this
-        variant.outputs
-            .map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
-            .forEach { output ->
-                if (variant.buildType.name == "release") {
-                    output.outputFileName = "WaterWise.apk"
-                }
-            }
     }
 }
 
-dependencies {
+flutter {
+    source = "../.."
+}

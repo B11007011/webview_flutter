@@ -28,14 +28,11 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Install dependencies
+        run: flutter pub get
+
       - name: Fix Android project structure
         run: |
-          # Create a temporary Flutter project with the correct structure
-          mkdir -p temp_project
-          cd temp_project
-          flutter create --project-name waterwise --org com.example.waterwise temp_app
-          cd ..
-          
           # Make the fix script executable
           chmod +x fix_gradle_project.sh
           
@@ -46,9 +43,6 @@ jobs:
         run: |
           echo "flutter.sdk=$FLUTTER_HOME" > android/local.properties
           echo "sdk.dir=$ANDROID_SDK_ROOT" >> android/local.properties
-
-      - name: Install dependencies
-        run: flutter pub get
 
       - name: Build APK
         run: |
