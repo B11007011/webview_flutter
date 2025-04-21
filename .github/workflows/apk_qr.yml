@@ -28,6 +28,20 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Fix Android project structure
+        run: |
+          # Create a temporary Flutter project with the correct structure
+          mkdir -p temp_project
+          cd temp_project
+          flutter create --project-name waterwise --org com.example.waterwise temp_app
+          cd ..
+          
+          # Make the fix script executable
+          chmod +x fix_gradle_project.sh
+          
+          # Run the fix script
+          ./fix_gradle_project.sh
+
       - name: Create local.properties
         run: |
           echo "flutter.sdk=$FLUTTER_HOME" > android/local.properties
@@ -39,10 +53,14 @@ jobs:
       - name: Build APK
         run: |
           flutter build apk --release
-          echo "APK_PATH=build/app/outputs/flutter-apk/app-release.apk" >> $GITHUB_ENV
-          mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/WaterWise.apk
+          APK_PATH=build/app/outputs/flutter-apk/app-release.apk
+          echo "APK_PATH=${APK_PATH}" >> $GITHUB_ENV
           echo "APK_NAME=WaterWise.apk" >> $GITHUB_ENV
-          echo "APK_PATH=build/app/outputs/flutter-apk/WaterWise.apk" >> $GITHUB_ENV
+          # Rename the APK
+          if [ -f "$APK_PATH" ]; then
+            mv "$APK_PATH" "build/app/outputs/flutter-apk/WaterWise.apk"
+            echo "APK_PATH=build/app/outputs/flutter-apk/WaterWise.apk" >> $GITHUB_ENV
+          fi
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
