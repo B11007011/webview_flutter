@@ -39,6 +39,12 @@ export default function CreateAppPage() {
       return;
     }
 
+    if (!user || !user.uid) {
+      toast.error('You must be logged in to create an app');
+      router.push('/login');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       
@@ -53,31 +59,42 @@ export default function CreateAppPage() {
 
       // Create a new build record in Firestore
       const buildId = Date.now().toString();
-      const userId = user?.uid;
+      const userId = user.uid;
       
       // Add the build to Firestore
-      await setDoc(doc(db, 'builds', buildId), {
-        userId,
-        url,
-        appName,
-        status: 'pending',
-        createdAt: new Date().toISOString(),
-      });
+      try {
+        await setDoc(doc(db, 'builds', buildId), {
+          userId,
+          url,
+          appName,
+          status: 'pending',
+          createdAt: new Date().toISOString(),
+        });
+      } catch (error: any) {
+        console.error('Firestore error:', error);
+        if (error.code === 'permission-denied') {
+          toast.error('Permission denied. Please check Firebase security rules.');
+        } else {
+          toast.error(`Error creating build record: ${error.message || 'Unknown error'}`);
+        }
+        setIsSubmitting(false);
+        return;
+      }
 
       // Trigger the build process
       try {
         await triggerBuild(buildId, url, appName);
         toast.success('Build request submitted successfully!');
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error triggering build:', error);
-        toast.error('Created build record but failed to start build process. Check build details for status.');
+        toast.error(`Failed to start build process: ${error.message || 'Unknown error'}`);
       }
       
       // Redirect to the build details page
       router.push(`/dashboard/builds/${buildId}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting build:', error);
-      toast.error('Failed to submit build request. Please try again.');
+      toast.error(`Failed to submit build request: ${error.message || 'Please try again'}`);
     } finally {
       setIsSubmitting(false);
     }

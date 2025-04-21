@@ -7,6 +7,7 @@ import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { auth } from '@/lib/firebase';
 
 interface BuildData {
   userId: string;
@@ -37,7 +38,16 @@ export default function BuildDetailsPage({ params }: { params: { buildId: string
           return;
         }
 
-        setBuildData(buildDoc.data() as BuildData);
+        // Check if the current user has permission to access this build
+        const buildData = buildDoc.data() as BuildData;
+        const currentUser = auth.currentUser;
+        if (buildData.userId !== currentUser?.uid) {
+          setError('You do not have permission to view this build');
+          setLoading(false);
+          return;
+        }
+
+        setBuildData(buildData);
         
         // Set up realtime listener for updates
         const unsubscribe = onSnapshot(
@@ -49,15 +59,25 @@ export default function BuildDetailsPage({ params }: { params: { buildId: string
           },
           (err) => {
             console.error('Error listening to build updates:', err);
-            toast.error('Error receiving real-time updates');
+            if (err.code === 'permission-denied') {
+              toast.error('Permission denied. Please check Firebase security rules.');
+              setError('Permission denied accessing build data');
+            } else {
+              toast.error('Error receiving real-time updates');
+              setError(`Failed to get updates: ${err.message}`);
+            }
           }
         );
 
         setLoading(false);
         return () => unsubscribe();
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching build data:', err);
-        setError('Failed to load build data');
+        if (err.code === 'permission-denied') {
+          setError('Permission denied. You may not have access to this build.');
+        } else {
+          setError(`Failed to load build data: ${err.message || 'Unknown error'}`);
+        }
         setLoading(false);
       }
     };

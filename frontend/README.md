@@ -62,6 +62,7 @@ This is the frontend web application for the WebView SaaS Platform, built with N
 3. Create a Firestore database
 4. Generate a new web app configuration and add it to your .env.local file
 5. For server-side functionality, generate a service account key and add it to your .env.local file
+6. Deploy the security rules (see Troubleshooting section)
 
 ### GitHub Actions Setup
 
@@ -100,6 +101,41 @@ frontend/
 2. Import the project in Vercel dashboard
 3. Configure environment variables
 4. Deploy
+
+## Troubleshooting
+
+### Firebase Permission Errors
+
+If you encounter "FirebaseError: Missing or insufficient permissions" when accessing Firestore:
+
+1. **Check Authentication**: Ensure your user is properly authenticated
+2. **Verify Security Rules**: Make sure your Firestore security rules allow the operation
+3. **Deploy Security Rules**: You need to deploy the Firestore security rules:
+
+   ```bash
+   npm install -g firebase-tools
+   firebase login
+   firebase init firestore
+   # Edit firestore.rules with the proper rules
+   firebase deploy --only firestore:rules
+   ```
+
+4. **Check User Ownership**: For document operations, verify that the user's UID matches the `userId` field in the document
+
+### CSS Import Errors
+
+If you encounter "Error: Can't resolve 'tw-animate-css'" when starting the development server:
+
+1. Make sure `globals.css` has the correct Tailwind imports:
+
+   ```css
+   @tailwind base;
+   @tailwind components;
+   @tailwind utilities;
+   ```
+
+2. Check your `tailwind.config.js` to ensure it's properly configured
+3. Run `npm install` to ensure all dependencies are installed
 
 ## Contributing
 
