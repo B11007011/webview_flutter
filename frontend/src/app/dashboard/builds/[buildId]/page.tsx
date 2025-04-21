@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { auth } from '@/lib/firebase';
+import QRCode from 'react-qr-code';
 
 interface BuildData {
   userId: string;
@@ -204,34 +205,53 @@ export default function BuildDetailsPage({ params }: { params: { buildId: string
               <p className="mt-2 text-sm text-green-700">
                 Your app is ready for download. You can install it on your Android device.
               </p>
-              <div className="mt-4">
-                <Button className="w-full">
-                  {buildData.downloadUrl ? (
-                    <a
-                      href={buildData.downloadUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex w-full items-center justify-center"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="mr-2 h-5 w-5"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
+              
+              {buildData.downloadUrl && (
+                <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <div>
+                    <Button className="w-full">
+                      <a
+                        href={buildData.downloadUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex w-full items-center justify-center"
                       >
-                        <path
-                          fillRule="evenodd"
-                          d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                      Download APK
-                    </a>
-                  ) : (
-                    <span>Download APK (Demo)</span>
-                  )}
-                </Button>
-              </div>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="mr-2 h-5 w-5"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        Download APK
+                      </a>
+                    </Button>
+                    <p className="mt-2 text-center text-xs text-green-600">
+                      Download directly to your Android device
+                    </p>
+                  </div>
+                  
+                  <div className="flex flex-col items-center justify-center">
+                    <div className="bg-white p-2">
+                      <QRCode 
+                        value={buildData.downloadUrl} 
+                        size={128} 
+                        bgColor="#FFFFFF" 
+                        fgColor="#000000" 
+                        level="L"
+                      />
+                    </div>
+                    <p className="mt-2 text-center text-xs text-green-600">
+                      Scan this QR code on your Android device to download
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="rounded-lg bg-red-50 p-4">
