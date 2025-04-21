@@ -1,4 +1,4 @@
-name: Build APK, Upload, and Generate QR
+name: Build and Release APK
 
 on:
   push:
@@ -7,8 +7,6 @@ on:
 
 permissions:
   contents: write
-  actions: write
-  checks: write
 
 jobs:
   build:
@@ -16,17 +14,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
-
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -40,66 +33,25 @@ jobs:
           echo "flutter.sdk=$FLUTTER_HOME" > android/local.properties
           echo "sdk.dir=$ANDROID_SDK_ROOT" >> android/local.properties
 
-      - name: Fix Android project structure
-        run: |
-          # Make script executable
-          chmod +x ./fix_android_project.sh
-          # Run the fix script
-          ./fix_android_project.sh
-          # Create local.properties again (since we replaced the android directory)
-          echo "flutter.sdk=$FLUTTER_HOME" > android/local.properties
-          echo "sdk.dir=$ANDROID_SDK_ROOT" >> android/local.properties
-
-      - name: Fix splash screen
-        run: |
-          # Make script executable
-          chmod +x ./fix_splash_screen.sh
-          # Run the fix script
-          ./fix_splash_screen.sh
-
-      - name: Check directory structure
-        run: |
-          pwd
-          echo "Current directory structure:"
-          ls -la
-          echo "Android directory structure:"
-          ls -la android/
-          echo "App directory structure:"
-          ls -la android/app/
-          echo "Src/main directory structure:"
-          ls -la android/app/src/main/
-          echo "Gradle wrapper files:"
-          find android -name "gradlew*"
-          find android -name "gradle-wrapper*"
-
       - name: Install dependencies
-        run: |
-          flutter config --no-analytics
-          flutter pub get
+        run: flutter pub get
 
       - name: Build APK
         run: |
-          cd android
-          ./gradlew clean
-          cd ..
-          flutter build apk --release --verbose
-          APK_NAME=$(ls build/app/outputs/flutter-apk/ | grep -E '\.apk$' | grep -v '\.sha1$')
-          echo "APK_NAME=${APK_NAME}" >> $GITHUB_ENV
-          echo "APK_PATH=build/app/outputs/flutter-apk/${APK_NAME}" >> $GITHUB_ENV
-          # Rename APK to include WaterWise name
-          if [ -f "build/app/outputs/flutter-apk/${APK_NAME}" ]; then
-            mv "build/app/outputs/flutter-apk/${APK_NAME}" "build/app/outputs/flutter-apk/WaterWise.apk"
-            echo "APK_NAME=WaterWise.apk" >> $GITHUB_ENV
-            echo "APK_PATH=build/app/outputs/flutter-apk/WaterWise.apk" >> $GITHUB_ENV
-          fi
+          flutter build apk --release
+          echo "APK_PATH=build/app/outputs/flutter-apk/app-release.apk" >> $GITHUB_ENV
+          mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/WaterWise.apk
+          echo "APK_NAME=WaterWise.apk" >> $GITHUB_ENV
+          echo "APK_PATH=build/app/outputs/flutter-apk/WaterWise.apk" >> $GITHUB_ENV
 
-      - name: Upload APK
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: WaterWise-release-apk
+          name: WaterWise-APK
           path: ${{ env.APK_PATH }}
+          retention-days: 30
 
-      - name: Create Release
+      - name: Create GitHub Release
         id: create_release
         uses: softprops/action-gh-release@v1
         env:
@@ -109,35 +61,24 @@ jobs:
           tag_name: v1.0.${{ github.run_number }}
           name: WaterWise v1.0.${{ github.run_number }}
           body: |
-            Automated APK build
-            Build number: ${{ github.run_number }}
+            WaterWise App - Build ${{ github.run_number }}
             Commit: ${{ github.sha }}
-            App: WaterWise
           draft: false
           prerelease: false
 
-      - name: Generate QR Code
+      - name: Generate QR Code for Download
         run: |
           sudo apt-get update
-          sudo apt-get install -y qrencode
-          # Set a clear app name in the URL to avoid confusion
-          APP_NAME="WaterWise"  # Display name of the app
-          REPO_NAME="${GITHUB_REPOSITORY#*/}"  # Extract repository name without owner
-          echo "Repository name: $REPO_NAME" >> $GITHUB_STEP_SUMMARY
+          sudo apt-get install -y qrencode imagemagick
           QR_URL="https://github.com/${{ github.repository }}/releases/download/v1.0.${{ github.run_number }}/${{ env.APK_NAME }}"
-          echo "Generated download URL: $QR_URL" >> $GITHUB_STEP_SUMMARY
-          # Add a text label to the QR image
           qrencode -o qr_temp.png "$QR_URL"
-          # Install ImageMagick to add text to image
-          sudo apt-get install -y imagemagick
           convert qr_temp.png -gravity south -pointsize 20 -annotate +0+10 "WaterWise App" qr_apk.png
           rm qr_temp.png
           echo "Download APK: $QR_URL" >> $GITHUB_STEP_SUMMARY
-          echo "App Name: $APP_NAME" >> $GITHUB_STEP_SUMMARY
 
-      - name: Upload QR Code
+      - name: Upload QR Code Artifact
         uses: actions/upload-artifact@v4
         with:
           name: WaterWise-QR-v1.0.${{ github.run_number }}
           path: qr_apk.png
-          retention-days: 90 
+          retention-days: 30 
