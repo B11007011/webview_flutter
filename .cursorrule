@@ -1,0 +1,212 @@
+{
+  "projectName": "WebView SaaS Platform",
+  "description": "A SaaS platform for generating custom WebView apps with Next.js frontend and Flutter backend",
+  
+  "roadmap": {
+    "phase1": {
+      "name": "Next.js Frontend & Authentication (Week 1)",
+      "tasks": {
+        "1.1_NextjsSetup": {
+          "name": "Next.js Setup",
+          "subtasks": [
+            {"task": "Initialize Next.js with TypeScript", "completed": true},
+            {"task": "Configure project structure (pages, components, lib folders)", "completed": true},
+            {"task": "Set up ESLint and Prettier", "completed": true},
+            {"task": "Add basic styling with Tailwind CSS and shadcn/ui", "completed": true}
+          ]
+        },
+        "1.2_FirebaseIntegration": {
+          "name": "Firebase Integration",
+          "subtasks": [
+            {"task": "Create Firebase project", "completed": false},
+            {"task": "Configure Firebase authentication (Google, Email)", "completed": true},
+            {"task": "Set up Firestore database", "completed": true},
+            {"task": "Create authentication utilities", "completed": true},
+            {"task": "Set up security rules", "completed": false}
+          ]
+        },
+        "1.3_AuthenticationPages": {
+          "name": "Authentication Pages",
+          "subtasks": [
+            {"task": "Create login page with Google authentication", "completed": true},
+            {"task": "Add email/password authentication (optional)", "completed": false},
+            {"task": "Implement authentication state management", "completed": true},
+            {"task": "Add protected routes", "completed": true},
+            {"task": "Create user profile page", "completed": true}
+          ]
+        }
+      }
+    },
+    "phase2": {
+      "name": "APK Generation Pipeline (Week 2)",
+      "tasks": {
+        "2.1_FlutterWebViewTemplate": {
+          "name": "Flutter WebView Template",
+          "subtasks": [
+            {"task": "Basic WebView implementation", "completed": true},
+            {"task": "Error handling and fallback URLs", "completed": true},
+            {"task": "Cross-origin request handling", "completed": true}
+          ]
+        },
+        "2.2_GitHubActionsPipeline": {
+          "name": "GitHub Actions Pipeline",
+          "subtasks": [
+            {"task": "Create GitHub repository for Flutter template", "completed": false},
+            {"task": "Set up workflow file for APK generation", "completed": true},
+            {"task": "Configure template customization step", "completed": true},
+            {"task": "Add storage upload step", "completed": true},
+            {"task": "Test end-to-end pipeline", "completed": false}
+          ]
+        },
+        "2.3_APIIntegration": {
+          "name": "API Integration",
+          "subtasks": [
+            {"task": "Create API endpoint to trigger builds", "completed": true},
+            {"task": "Add Firestore integration for build status", "completed": true},
+            {"task": "Implement webhook for build completion notifications", "completed": false},
+            {"task": "Set up secure GitHub token handling", "completed": true}
+          ]
+        }
+      }
+    },
+    "phase3": {
+      "name": "User Dashboard (Week 3)",
+      "tasks": {
+        "3.1_DashboardUI": {
+          "name": "Dashboard UI",
+          "subtasks": [
+            {"task": "Create main dashboard layout", "completed": true},
+            {"task": "Add navigation bar and user profile section", "completed": true},
+            {"task": "Create website URL input form", "completed": true},
+            {"task": "Design build status display", "completed": true}
+          ]
+        },
+        "3.2_BuildManagement": {
+          "name": "Build Management",
+          "subtasks": [
+            {"task": "Implement form submission logic", "completed": true},
+            {"task": "Add real-time build status tracking", "completed": true},
+            {"task": "Create build history page", "completed": true},
+            {"task": "Add build detail view", "completed": true}
+          ]
+        },
+        "3.3_APKDownload": {
+          "name": "APK Download",
+          "subtasks": [
+            {"task": "Create download page/component", "completed": true},
+            {"task": "Generate QR code for direct download", "completed": false},
+            {"task": "Add email notification option", "completed": false},
+            {"task": "Implement build analytics", "completed": false}
+          ]
+        }
+      }
+    },
+    "phase4": {
+      "name": "Monetization & Launch (Week 4)",
+      "tasks": {
+        "4.1_SubscriptionSystem": {
+          "name": "Subscription System",
+          "subtasks": [
+            {"task": "Set up Stripe account and products", "completed": false},
+            {"task": "Create subscription plans", "completed": false},
+            {"task": "Implement checkout process", "completed": false},
+            {"task": "Add subscription management page", "completed": false},
+            {"task": "Create usage tracking and limits", "completed": false}
+          ]
+        },
+        "4.2_AdminDashboard": {
+          "name": "Admin Dashboard",
+          "subtasks": [
+            {"task": "Create admin-only interface", "completed": false},
+            {"task": "Add user management features", "completed": false},
+            {"task": "Implement subscription overview", "completed": false},
+            {"task": "Create revenue reports", "completed": false}
+          ]
+        },
+        "4.3_FinalTouches": {
+          "name": "Final Touches",
+          "subtasks": [
+            {"task": "Add landing page with pricing", "completed": false},
+            {"task": "Create documentation and help pages", "completed": false},
+            {"task": "Implement error tracking", "completed": false},
+            {"task": "Add contact/support form", "completed": false},
+            {"task": "Optimize performance", "completed": false}
+          ]
+        },
+        "4.4_Launch": {
+          "name": "Launch",
+          "subtasks": [
+            {"task": "Deploy to Vercel", "completed": false},
+            {"task": "Configure environment variables", "completed": false},
+            {"task": "Set up monitoring and analytics", "completed": false},
+            {"task": "Create marketing materials", "completed": false}
+          ]
+        }
+      }
+    }
+  },
+  
+  "technicalSpecs": {
+    "frontend": {
+      "framework": "Next.js 14+ with TypeScript",
+      "styling": "Tailwind CSS",
+      "dataFetching": "React Query",
+      "authentication": "NextAuth.js"
+    },
+    "backend": {
+      "authentication": "Firebase Authentication",
+      "database": "Firestore",
+      "storage": "Firebase Storage",
+      "serverless": "Firebase Functions (optional)"
+    },
+    "apkGeneration": {
+      "template": "Flutter WebView template",
+      "cicd": "GitHub Actions",
+      "configuration": "Dynamic configuration injection"
+    },
+    "monetization": {
+      "payment": "Stripe Checkout and Customer Portal",
+      "tiers": ["Free", "Basic", "Pro"],
+      "model": "Usage-based limitations"
+    }
+  },
+  
+  "priorityTasks": [
+    "Set up the Next.js project structure",
+    "Configure Firebase authentication",
+    "Create login and dashboard pages",
+    "Set up GitHub Actions workflow for builds",
+    "Implement the build submission form"
+  ],
+  
+  "codeStructure": {
+    "frontend": {
+      "path": "frontend/",
+      "framework": "Next.js",
+      "structure": [
+        "pages/",
+        "components/",
+        "lib/",
+        "public/",
+        "styles/"
+      ]
+    },
+    "backend": {
+      "services": [
+        "Firebase Authentication",
+        "Firestore",
+        "Firebase Storage",
+        "GitHub Actions"
+      ]
+    },
+    "flutter_template": {
+      "structure": [
+        "lib/",
+        "android/",
+        "ios/",
+        "web/",
+        "assets/"
+      ]
+    }
+  }
+}
