@@ -1,0 +1,112 @@
+name: Build Customized WebView APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      appName:
+        description: 'App Name'
+        required: true
+        default: 'WebView App'
+      url:
+        description: 'WebView URL'
+        required: true
+        default: 'https://example.com'
+      primaryColor:
+        description: 'Primary Color (hex format without #, e.g. FF5722)'
+        required: true
+        default: '2196F3'
+      userId:
+        description: 'User ID for APK naming'
+        required: true
+        default: 'user1'
+      buildId:
+        description: 'Build ID for APK naming'
+        required: true
+        default: '001'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
+          channel: 'stable'
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Customize App Name
+        run: |
+          sed -i "s/name: .*$/name: ${{ github.event.inputs.appName }}/" pubspec.yaml
+          sed -i "s/description: .*$/description: \"A customized WebView app for ${{ github.event.inputs.appName }}.\"/" pubspec.yaml
+
+      - name: Customize WebView URL
+        run: |
+          # Replace the primary URL with the input URL
+          sed -i "s|final String _primaryUrl = .*$|final String _primaryUrl = '${{ github.event.inputs.url }}';|" lib/main.dart
+          # Keep the fallback URL as the same URL to ensure reliability
+          sed -i "s|final String _fallbackUrl = .*$|final String _fallbackUrl = '${{ github.event.inputs.url }}';|" lib/main.dart
+
+      - name: Create Color Helper Dart File
+        run: |
+          cat > lib/color_helper.dart << 'EOF'
+          import 'package:flutter/material.dart';
+
+          // Helper class to generate a MaterialColor from a single hex color
+          class ColorHelper {
+            static MaterialColor createMaterialColor(Color color) {
+              List<double> strengths = <double>[.05, .1, .2, .3, .4, .5, .6, .7, .8, .9];
+              Map<int, Color> swatch = <int, Color>{};
+              
+              final int r = color.red;
+              final int g = color.green;
+              final int b = color.blue;
+
+              for (var strength in strengths) {
+                final double ds = 0.5 - strength;
+                swatch[(strength * 1000).round()] = Color.fromRGBO(
+                  r + ((ds < 0 ? r : (255 - r)) * ds).round(),
+                  g + ((ds < 0 ? g : (255 - g)) * ds).round(),
+                  b + ((ds < 0 ? b : (255 - b)) * ds).round(),
+                  1,
+                );
+              }
+              
+              return MaterialColor(color.value, swatch);
+            }
+          }
+          EOF
+
+      - name: Update Main.dart to Use Custom Color
+        run: |
+          # Update the imports to include the color helper
+          sed -i '1s/^/import '"'"'color_helper.dart'"'"';\n/' lib/main.dart
+          
+          # Replace the theme's primarySwatch with our custom color
+          sed -i "s/primarySwatch: Colors\..*/primarySwatch: ColorHelper.createMaterialColor(Color(0xFF${{ github.event.inputs.primaryColor }})),/" lib/main.dart
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Rename APK with unique ID
+        run: |
+          mkdir -p build/outputs
+          cp build/app/outputs/flutter-apk/app-release.apk build/outputs/${{ github.event.inputs.userId }}_${{ github.event.inputs.buildId }}.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ github.event.inputs.userId }}_${{ github.event.inputs.buildId }}
+          path: build/outputs/${{ github.event.inputs.userId }}_${{ github.event.inputs.buildId }}.apk
+          retention-days: 7 
